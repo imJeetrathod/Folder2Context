@@ -40,7 +40,6 @@ body {
     min-height: 100vh;
 }
 
-/* Header */
 .app-header {
     height: 80px;
     display: flex;
@@ -92,7 +91,6 @@ body {
     color: var(--text-main);
 }
 
-/* Stepper */
 .stepper {
     display: flex;
     align-items: center;
@@ -133,7 +131,6 @@ body {
     background: var(--border);
 }
 
-/* Views */
 .view {
     animation: fadeIn 0.3s ease-out;
 }
@@ -145,7 +142,6 @@ body {
 
 .hidden { display: none !important; }
 
-/* Upload Zone */
 .drop-zone {
     background: var(--bg-card);
     border: 2px dashed var(--border);
@@ -194,7 +190,6 @@ body {
     gap: 0.5rem;
 }
 
-/* Features Grid */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -224,7 +219,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Selection Section */
 .view-header {
     display: flex;
     justify-content: space-between;
@@ -297,14 +291,15 @@ body {
     font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s;
+    color: var(--text-muted);
 }
 
 .filter-pill.active {
     background: var(--primary);
     border-color: var(--primary);
+    color: white;
 }
 
-/* Workspace Grid */
 .workspace-grid {
     display: grid;
     grid-template-columns: 1fr 300px;
@@ -322,17 +317,55 @@ body {
 }
 
 .tree-header {
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.02);
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.8rem;
-    font-weight: 600;
+}
+
+.tree-title {
+    font-size: 0.75rem;
+    font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.tree-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.btn-action {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-action svg {
+    width: 14px;
+    height: 14px;
+}
+
+.btn-action:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
 }
 
 .file-tree {
@@ -341,7 +374,6 @@ body {
     padding: 0.5rem;
 }
 
-/* Tree Elements */
 .tree-item {
     display: flex;
     align-items: center;
@@ -387,7 +419,6 @@ body {
     padding-left: 10px;
 }
 
-/* Stats Sidebar */
 .stats-sidebar {
     display: flex;
     flex-direction: column;
@@ -424,7 +455,6 @@ body {
 .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
 .token-note { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; }
 
-/* Output View */
 .output-container {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -463,7 +493,6 @@ body {
     line-height: 1.6;
 }
 
-/* Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -491,7 +520,6 @@ body {
 .btn-secondary { background: var(--bg-input); color: var(--text-main); border-color: var(--border); }
 .btn-secondary:hover { border-color: var(--border-light); }
 
-/* Modal */
 .modal {
     position: fixed;
     inset: 0;
@@ -534,7 +562,6 @@ body {
 .modal-body { flex: 1; overflow: auto; padding: 1.5rem; background: #020617; border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg); }
 #previewContent { font-family: var(--font-mono); font-size: 0.85rem; color: #cbd5e1; white-space: pre-wrap; word-break: break-all; }
 
-/* Toast */
 .toast {
     position: fixed;
     bottom: 2rem;
@@ -553,13 +580,11 @@ body {
 
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-/* Scrollbars */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
-/* Responsive */
 @media (max-width: 1024px) {
     .workspace-grid { grid-template-columns: 1fr; height: auto; }
     .tree-container { height: 500px; }
@@ -573,7 +598,6 @@ body {
     .btn-primary { grid-column: span 2; }
 }
 
-/* Dropdown */
 .dropdown { position: relative; display: inline-block; }
 .dropdown-content {
     display: none;

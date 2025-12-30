@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visit Statistics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- CounterAPI JS -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/counterapi/dist/counter.browser.min.js"></script> -->
+</head>
+<body>
+  <div class="app-container">
+    <h1>📊 Visit Statistics</h1>
+    <p class="text-muted">Private analytics page</p>
+
+    <div class="card" style="max-width: 420px; margin-top: 2rem;">
+      <label>Total Visits</label>
+      <h2 id="count">Loading…</h2>
+    </div>
+  </div>
+
+<script>
+  fetch('https://api.counterapi.dev/v1/folder2context/visits')
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('count').textContent =
+        Number(data.count).toLocaleString();
+    })
+    .catch(() => {
+      document.getElementById('count').textContent = 'Error';
+    });
+</script>
+
+
+</body>
+</html>

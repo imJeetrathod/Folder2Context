@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="style.css">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/counterapi/dist/counter.browser.min.js"></script> -->
+
 </head>
 <body>
     <div class="app-container">
@@ -20,13 +22,13 @@
                     <i data-lucide="folder-code" class="logo-icon"></i>
                     <h1>Folder2Context</h1>
                 </div>
-                <!-- <span class="badge">v2.0</span> -->
+                <span class="badge">v2.0</span>
             </div>
             <div class="header-right">
                 <button id="backBtn" class="btn btn-ghost hidden">
                     <i data-lucide="arrow-left"></i> Back
                 </button>
-                <a href="https://github.com/imJeetrathod/Folder2Context" target="_blank" class="github-link">
+                <a href="https://github.com" target="_blank" class="github-link">
                     <i data-lucide="github"></i>
                 </a>
             </div>
@@ -101,8 +103,6 @@
                         </div>
                     </div>
                     <div class="view-actions">
-                        <button id="selectAllBtn" class="btn btn-ghost btn-sm">Select All</button>
-                        <button id="deselectAllBtn" class="btn btn-ghost btn-sm">Deselect None</button>
                         <button id="proceedBtn" class="btn btn-primary">
                             Generate Context <i data-lucide="chevron-right"></i>
                         </button>
@@ -122,8 +122,15 @@
                 <div class="workspace-grid">
                     <div class="tree-container">
                         <div class="tree-header">
-                            <span>File Explorer</span>
-                            <i data-lucide="filter" class="icon-xs"></i>
+                            <span class="tree-title">File Explorer</span>
+                            <div class="tree-header-actions">
+                                <button id="selectAllBtn" class="btn-action">
+                                    <i data-lucide="check-square"></i> Select All
+                                </button>
+                                <button id="deselectAllBtn" class="btn-action">
+                                    <i data-lucide="square"></i> Deselect All
+                                </button>
+                            </div>
                         </div>
                         <div id="fileTree" class="file-tree"></div>
                     </div>
