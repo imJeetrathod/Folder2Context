@@ -6,12 +6,34 @@
     <title>Folder2Context | Developer Context Tool</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/counterapi/dist/counter.browser.min.js"></script> -->
-
+    <style>
+        .visit-count {
+            font-size: 0.875rem;
+            color: var(--text-muted, #777);
+            margin-right: 1.2rem;
+            display: flex;
+            align-items: center;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+        .visit-count span {
+            font-family: 'JetBrains Mono', monospace;
+            margin-left: 0.35rem;
+            font-weight: 600;
+            color: var(--text-primary, #333);
+        }
+        @media (max-width: 640px) {
+            .visit-count {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -22,13 +44,13 @@
                     <i data-lucide="folder-code" class="logo-icon"></i>
                     <h1>Folder2Context</h1>
                 </div>
-                <span class="badge">v2.0</span>
             </div>
             <div class="header-right">
                 <button id="backBtn" class="btn btn-ghost hidden">
                     <i data-lucide="arrow-left"></i> Back
                 </button>
-                <a href="https://github.com" target="_blank" class="github-link">
+               
+                <a href="https://github.com/imJeetrathod/Folder2Context" target="_blank" class="github-link">
                     <i data-lucide="github"></i>
                 </a>
             </div>
@@ -89,6 +111,13 @@
                         <h3>LLM Ready</h3>
                         <p>Outputs formatted markdown structure compatible with GPT-4, Claude, and Gemini.</p>
                     </div>
+                   <div class="feature-card visits-card">
+    <i data-lucide="bar-chart-3"></i>
+    <h3>Total Visits</h3>
+    <div class="visit-number" id="visitCount">22</div>
+    <p class="visit-subtext">Total page views</p>
+</div>
+
                 </div>
             </section>
 
@@ -108,17 +137,13 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="toolbar">
                     <div class="search-wrapper">
                         <i data-lucide="search" class="search-icon"></i>
                         <input type="text" id="fileSearch" placeholder="Filter by filename (e.g. .js, component)...">
                     </div>
-                    <div class="filter-pills" id="filterContainer">
-                        <!-- Dynamic extension filters -->
-                    </div>
+                    <div class="filter-pills" id="filterContainer"></div>
                 </div>
-
                 <div class="workspace-grid">
                     <div class="tree-container">
                         <div class="tree-header">
@@ -134,7 +159,6 @@
                         </div>
                         <div id="fileTree" class="file-tree"></div>
                     </div>
-                    
                     <aside class="stats-sidebar">
                         <div class="card stat-card">
                             <label>Selection Summary</label>
@@ -190,7 +214,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="output-container">
                     <div class="output-toolbar">
                         <div class="tab active">Context Preview</div>
@@ -225,13 +248,7 @@
             <p id="loadingText">Analyzing structure...</p>
         </div>
     </div>
-    <div class="card" style="max-width: 260px; margin: 1.5rem auto;">
-  <label>Total Visits</label>
-  <h2 id="visitCount">Loading…</h2>
-</div>
 
-
-    <!-- Notification Toast -->
     <div id="toast" class="toast hidden">
         <i data-lucide="check-circle" class="toast-icon"></i>
         <span id="toastMessage">Copied to clipboard!</span>

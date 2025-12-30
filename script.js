@@ -21,11 +21,11 @@ const CONFIG = {
         '.r', '.m', '.scala', '.groovy', '.gradle', '.properties', '.tf', '.env.example'
     ],
     MAX_FILE_SIZE: 1000_000, // 1MB limit
-    TOKENS_PER_CHAR: 0.28 
+    TOKENS_PER_CHAR: 0.28
 };
 
 const state = {
-    files: [],            
+    files: [],
     selectedPaths: new Set(),
     projectName: '',
     folderHandle: null,
@@ -72,11 +72,15 @@ const el = {
     loadingOverlay: document.getElementById('loadingOverlay'),
     loadingText: document.getElementById('loadingText'),
     toast: document.getElementById('toast'),
-    toastMsg: document.getElementById('toastMessage')
+    toastMsg: document.getElementById('toastMessage'),
+    visitCount: document.getElementById('visitCount')
 };
 
 function init() {
-    if (!('showDirectoryPicker' in window)) return;
+    if (!('showDirectoryPicker' in window)) {
+        el.uploadZone.innerHTML = '<p style="color:red;">Your browser does not support the File System Access API.</p>';
+        return;
+    }
 
     el.uploadZone.addEventListener('click', handleDirectoryOpen);
     el.backBtn.addEventListener('click', goBack);
@@ -84,13 +88,12 @@ function init() {
     el.deselectAllBtn.addEventListener('click', () => toggleAll(false));
     el.proceedBtn.addEventListener('click', generateContext);
     el.fileSearch.addEventListener('input', handleSearch);
-    
+
     el.copyBtn.addEventListener('click', () => copyToClipboard(el.output.value, 'Full context copied!'));
     el.copyStructureBtn.addEventListener('click', () => {
         const structureOnly = buildContextOutput(state.files.filter(f => state.selectedPaths.has(f.path)), true);
         copyToClipboard(structureOnly, 'Structure copied!');
     });
-
     el.downloadTxtBtn.addEventListener('click', downloadMarkdown);
     el.downloadJsonBtn.addEventListener('click', downloadJson);
     el.closePreview.addEventListener('click', () => el.previewModal.classList.remove('active'));
@@ -111,18 +114,20 @@ function updateStepUI(step) {
     el.backBtn.classList.toggle('hidden', step === 1);
 }
 
-function goBack() { if (state.currentStep > 1) updateStepUI(state.currentStep - 1); }
+function goBack() {
+    if (state.currentStep > 1) updateStepUI(state.currentStep - 1);
+}
 
 async function handleDirectoryOpen() {
     try {
         const handle = await window.showDirectoryPicker();
         state.folderHandle = handle;
         state.projectName = handle.name;
-        
+
         showLoading('Scanning file system...');
         state.files = [];
         await scanRecursive(handle, '');
-        
+
         state.files = state.files.filter(f => {
             const ext = '.' + f.name.split('.').pop().toLowerCase();
             return CONFIG.TEXT_EXTENSIONS.includes(ext) && f.size <= CONFIG.MAX_FILE_SIZE;
@@ -130,12 +135,13 @@ async function handleDirectoryOpen() {
 
         state.selectedPaths = new Set(state.files.map(f => f.path));
         state.activeFilters = new Set([...new Set(state.files.map(f => f.extension))]);
-        
+
         hideLoading();
         prepareSelectionView();
         updateStepUI(2);
     } catch (err) {
         hideLoading();
+        console.error(err);
     }
 }
 
@@ -143,6 +149,7 @@ async function scanRecursive(handle, parentPath) {
     for await (const entry of handle.values()) {
         const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
         if (CONFIG.IGNORE_DIRS.includes(entry.name)) continue;
+
         if (entry.kind === 'file') {
             const file = await entry.getFile();
             state.files.push({
@@ -163,12 +170,13 @@ function prepareSelectionView() {
     const folderSet = new Set();
     state.files.forEach(f => {
         const parts = f.path.split('/');
-        if (parts.length > 1) {
-            for (let i = 1; i < parts.length; i++) folderSet.add(parts.slice(0, i).join('/'));
+        for (let i = 1; i < parts.length; i++) {
+            folderSet.add(parts.slice(0, i).join('/'));
         }
     });
     el.fileCountBadge.textContent = `${state.files.length} Files`;
     el.dirCountBadge.textContent = `${folderSet.size} Folders`;
+
     renderFileTree();
     renderFilters();
     updateStats();
@@ -214,6 +222,7 @@ function renderFileTree() {
             }
         });
     });
+
     el.fileTree.innerHTML = '';
     const container = document.createElement('div');
     renderNode(tree, container, '');
@@ -223,13 +232,14 @@ function renderFileTree() {
 
 function renderNode(node, container, currentPath) {
     if (node.folders) {
-        Object.entries(node.folders).sort().forEach(([name, subNode]) => {
+        Object.entries(node.folders).sort(([a], [b]) => a.localeCompare(b)).forEach(([name, subNode]) => {
             const folderPath = currentPath ? `${currentPath}/${name}` : name;
             const folderEl = document.createElement('div');
             folderEl.className = 'folder-wrapper';
+
             const header = document.createElement('div');
             header.className = 'tree-item folder-item';
-            
+
             const folderFiles = state.files.filter(f => f.path.startsWith(folderPath + '/'));
             const isAllSelected = folderFiles.length > 0 && folderFiles.every(f => state.selectedPaths.has(f.path));
             const isSomeSelected = folderFiles.some(f => state.selectedPaths.has(f.path));
@@ -247,27 +257,34 @@ function renderNode(node, container, currentPath) {
             const content = document.createElement('div');
             content.className = 'folder-header-content';
             content.innerHTML = `<i data-lucide="chevron-down" class="folder-arrow"></i><i data-lucide="folder" class="item-icon"></i><span class="item-name">${name}</span>`;
-            
+
             header.appendChild(checkbox);
             header.appendChild(content);
+
             const children = document.createElement('div');
-            children.className = 'folder-children';
+            children.className = 'folder-children hidden';
+
             content.onclick = () => {
                 header.querySelector('.folder-arrow').classList.toggle('collapsed');
                 children.classList.toggle('hidden');
             };
+
             folderEl.appendChild(header);
             folderEl.appendChild(children);
             container.appendChild(folderEl);
+
             renderNode(subNode, children, folderPath);
         });
     }
+
     if (node.files) {
-        node.files.sort((a,b) => a.name.localeCompare(b.name)).forEach(file => {
+        node.files.sort((a, b) => a.name.localeCompare(b.name)).forEach(file => {
             const fileEl = document.createElement('div');
             fileEl.className = 'tree-item file-item';
             fileEl.dataset.path = file.path;
+
             const isChecked = state.selectedPaths.has(file.path);
+
             fileEl.innerHTML = `
                 <input type="checkbox" class="checkbox file-checkbox" ${isChecked ? 'checked' : ''}>
                 <div class="item-icon"><i data-lucide="file-text"></i></div>
@@ -275,17 +292,32 @@ function renderNode(node, container, currentPath) {
                 <span class="item-meta">${(file.size / 1024).toFixed(1)} KB</span>
                 <button class="btn btn-sm btn-ghost preview-trigger"><i data-lucide="eye"></i></button>
             `;
+
             const cb = fileEl.querySelector('.file-checkbox');
-            cb.onclick = (e) => { e.stopPropagation(); if (cb.checked) state.selectedPaths.add(file.path); else state.selectedPaths.delete(file.path); updateStats(); };
+            cb.onclick = (e) => {
+                e.stopPropagation();
+                if (cb.checked) state.selectedPaths.add(file.path);
+                else state.selectedPaths.delete(file.path);
+                updateStats();
+            };
+
             fileEl.onclick = () => cb.click();
-            fileEl.querySelector('.preview-trigger').onclick = (e) => { e.stopPropagation(); showFilePreview(file); };
+            fileEl.querySelector('.preview-trigger').onclick = (e) => {
+                e.stopPropagation();
+                showFilePreview(file);
+            };
+
             container.appendChild(fileEl);
         });
     }
 }
 
 function toggleFolderSelection(folderPath, isSelected) {
-    state.files.forEach(f => { if (f.path.startsWith(folderPath + '/')) isSelected ? state.selectedPaths.add(f.path) : state.selectedPaths.delete(f.path); });
+    state.files.forEach(f => {
+        if (f.path.startsWith(folderPath + '/')) {
+            isSelected ? state.selectedPaths.add(f.path) : state.selectedPaths.delete(f.path);
+        }
+    });
     updateStats();
     renderFileTree();
 }
@@ -294,6 +326,7 @@ function updateStats() {
     const selected = state.files.filter(f => state.selectedPaths.has(f.path));
     const totalBytes = selected.reduce((acc, f) => acc + f.size, 0);
     const tokens = Math.ceil(totalBytes * CONFIG.TOKENS_PER_CHAR);
+
     el.selectedCount.textContent = selected.length;
     el.totalSize.textContent = (totalBytes / 1024).toFixed(1) + ' KB';
     el.tokenCount.textContent = tokens.toLocaleString();
@@ -305,7 +338,9 @@ function handleSearch() {
     document.querySelectorAll('.file-item').forEach(item => {
         const name = item.querySelector('.item-name').textContent.toLowerCase();
         const ext = '.' + name.split('.').pop();
-        item.style.display = (name.includes(query) && state.activeFilters.has(ext)) ? 'flex' : 'none';
+        const matchesQuery = name.includes(query);
+        const matchesFilter = state.activeFilters.has(ext);
+        item.style.display = (matchesQuery && matchesFilter) ? 'flex' : 'none';
     });
 }
 
@@ -320,17 +355,23 @@ function toggleAll(check) {
 async function generateContext() {
     const selected = state.files.filter(f => state.selectedPaths.has(f.path));
     if (selected.length === 0) return showToast('Select at least one file', true);
+
     showLoading('Building context...');
     try {
         const fileContents = await Promise.all(selected.map(async f => {
             const fileObj = await f.handle.getFile();
             return { path: f.path, content: await fileObj.text() };
         }));
+
         el.output.value = buildContextOutput(fileContents);
         el.finalStats.textContent = `${el.output.value.length.toLocaleString()} chars • ~${Math.ceil(el.output.value.length * CONFIG.TOKENS_PER_CHAR).toLocaleString()} tokens`;
+
         hideLoading();
         updateStepUI(3);
-    } catch (err) { hideLoading(); }
+    } catch (err) {
+        hideLoading();
+        console.error(err);
+    }
 }
 
 function buildContextOutput(files, structureOnly = false) {
@@ -343,7 +384,14 @@ function buildContextOutput(files, structureOnly = false) {
 
 function buildTreeString(paths) {
     const tree = {};
-    paths.forEach(p => { let cur = tree; p.split('/').forEach(part => { if (!cur[part]) cur[part] = {}; cur = cur[part]; }); });
+    paths.forEach(p => {
+        let cur = tree;
+        p.split('/').forEach(part => {
+            if (!cur[part]) cur[part] = {};
+            cur = cur[part];
+        });
+    });
+
     const lines = [];
     function traverse(node, prefix = '') {
         const keys = Object.keys(node).sort();
@@ -363,28 +411,41 @@ async function showFilePreview(file) {
         el.previewTitle.textContent = file.path;
         el.previewContent.textContent = await f.text();
         el.previewModal.classList.add('active');
-    } catch (err) {}
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 function copyToClipboard(text, msg) {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    showToast(msg);
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(msg);
+    }).catch(() => {
+        // Fallback
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast(msg);
+    });
 }
 
 function showToast(msg, isError = false) {
     el.toastMsg.textContent = msg;
-    el.toast.style.background = isError ? 'var(--danger)' : 'var(--primary)';
+    el.toast.style.background = isError ? '#dc3545' : '#28a745';
     el.toast.classList.remove('hidden');
     setTimeout(() => el.toast.classList.add('hidden'), 3000);
 }
 
-function showLoading(text) { el.loadingText.textContent = text; el.loadingOverlay.classList.remove('hidden'); }
-function hideLoading() { el.loadingOverlay.classList.add('hidden'); }
+function showLoading(text) {
+    el.loadingText.textContent = text;
+    el.loadingOverlay.classList.remove('hidden');
+}
+
+function hideLoading() {
+    el.loadingOverlay.classList.add('hidden');
+}
 
 function downloadMarkdown() {
     const blob = new Blob([el.output.value], { type: 'text/markdown' });
@@ -395,15 +456,33 @@ function downloadMarkdown() {
 }
 
 function downloadJson() {
-    const blob = new Blob([JSON.stringify({ project: state.projectName, raw: el.output.value }, null, 2)], { type: 'application/json' });
+    const data = {
+        project: state.projectName,
+        date: new Date().toISOString(),
+        context: el.output.value
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${state.projectName}-context.json`;
     a.click();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Visit Counter — Fixed & Working
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('https://api.counterapi.dev/v1/folder2context/visits/up')
-    .catch(() => {});
+    // Increment counter and display the new total
+    fetch('https://api.counterapi.dev/v1/folder2context/visits/up')
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.count !== undefined) {
+                el.visitCount.textContent = data.count.toLocaleString();
+            } else {
+                el.visitCount.textContent = '—';
+            }
+        })
+        .catch(() => {
+            el.visitCount.textContent = '—';
+        });
+
+    init();
 });
