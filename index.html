@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder2Context | Developer Context Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <i data-lucide="folder-code" class="logo-icon"></i>
+                    <h1>Folder2Context</h1>
+                </div>
+                <!-- <span class="badge">v2.0</span> -->
+            </div>
+            <div class="header-right">
+                <button id="backBtn" class="btn btn-ghost hidden">
+                    <i data-lucide="arrow-left"></i> Back
+                </button>
+                <a href="https://github.com" target="_blank" class="github-link">
+                    <i data-lucide="github"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Progress Steps -->
+        <nav class="stepper">
+            <div class="step active" id="step1-indicator">
+                <div class="step-dot"></div>
+                <span>Select Folder</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" id="step2-indicator">
+                <div class="step-dot"></div>
+                <span>Review Files</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" id="step3-indicator">
+                <div class="step-dot"></div>
+                <span>Copy Context</span>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- STEP 1: UPLOAD -->
+            <section id="uploadSection" class="view">
+                <div class="drop-zone" id="uploadZone">
+                    <div class="drop-zone-content">
+                        <div class="icon-stack">
+                            <i data-lucide="folder-plus" class="primary-icon"></i>
+                        </div>
+                        <h2>Open Project Folder</h2>
+                        <p>Select a local directory to parse its structure and contents for AI context.</p>
+                        <div class="upload-actions">
+                            <button class="btn btn-primary btn-lg">
+                                <i data-lucide="folder-open"></i> Choose Folder
+                            </button>
+                        </div>
+                        <div class="browser-warning" id="browserWarning">
+                            <i data-lucide="alert-circle"></i>
+                            Requires Chrome, Edge, or Brave
+                        </div>
+                    </div>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i data-lucide="shield-check"></i>
+                        <h3>Private & Local</h3>
+                        <p>Files never leave your browser. Processing is 100% client-side.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i data-lucide="zap"></i>
+                        <h3>Token Optimized</h3>
+                        <p>Automatically ignores node_modules, git, and binary files.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i data-lucide="layout"></i>
+                        <h3>LLM Ready</h3>
+                        <p>Outputs formatted markdown structure compatible with GPT-4, Claude, and Gemini.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 2: SELECTION -->
+            <section id="selectionSection" class="view hidden">
+                <div class="view-header">
+                    <div class="view-titles">
+                        <h2 id="projectName">Project Name</h2>
+                        <div class="project-meta">
+                            <span id="fileCountBadge" class="meta-tag">0 Files</span>
+                            <span id="dirCountBadge" class="meta-tag">0 Folders</span>
+                        </div>
+                    </div>
+                    <div class="view-actions">
+                        <button id="selectAllBtn" class="btn btn-ghost btn-sm">Select All</button>
+                        <button id="deselectAllBtn" class="btn btn-ghost btn-sm">Deselect None</button>
+                        <button id="proceedBtn" class="btn btn-primary">
+                            Generate Context <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="fileSearch" placeholder="Filter by filename (e.g. .js, component)...">
+                    </div>
+                    <div class="filter-pills" id="filterContainer">
+                        <!-- Dynamic extension filters -->
+                    </div>
+                </div>
+
+                <div class="workspace-grid">
+                    <div class="tree-container">
+                        <div class="tree-header">
+                            <span>File Explorer</span>
+                            <i data-lucide="filter" class="icon-xs"></i>
+                        </div>
+                        <div id="fileTree" class="file-tree"></div>
+                    </div>
+                    
+                    <aside class="stats-sidebar">
+                        <div class="card stat-card">
+                            <label>Selection Summary</label>
+                            <div class="stat-row">
+                                <span class="label">Files Selected</span>
+                                <span id="selectedCount" class="value">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="label">Total Size</span>
+                                <span id="totalSize" class="value">0 KB</span>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-label">
+                                    <span>Token Estimate</span>
+                                    <span id="tokenCount" class="value">0</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="tokenProgress" class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <p class="token-note">Approximate for GPT/Claude models</p>
+                            </div>
+                        </div>
+                        <div class="card help-card">
+                            <h4>Pro Tip</h4>
+                            <p>Excluding large libraries and build folders significantly improves LLM performance.</p>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <!-- STEP 3: OUTPUT -->
+            <section id="outputSection" class="view hidden">
+                <div class="view-header">
+                    <div class="view-titles">
+                        <h2>Generated Context</h2>
+                        <p id="outputStats" class="text-muted">Ready to be pasted into your chat.</p>
+                    </div>
+                    <div class="view-actions">
+                        <button id="copyBtn" class="btn btn-primary">
+                            <i data-lucide="copy"></i> Copy to Clipboard
+                        </button>
+                        <button id="copyStructureBtn" class="btn btn-ghost">
+                            <i data-lucide="list-tree"></i> Structure Only
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary" id="downloadDropdown">
+                                <i data-lucide="download"></i> Export
+                            </button>
+                            <div class="dropdown-content">
+                                <button id="downloadTxtBtn">Markdown (.md)</button>
+                                <button id="downloadJsonBtn">Dataset (.json)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="output-container">
+                    <div class="output-toolbar">
+                        <div class="tab active">Context Preview</div>
+                        <div class="output-meta" id="finalStats">0 chars • 0 tokens</div>
+                    </div>
+                    <textarea id="output" readonly spellcheck="false" placeholder="Generating content..."></textarea>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals & Overlays -->
+    <div id="previewModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i data-lucide="file-text"></i>
+                    <h3 id="previewTitle">filename.js</h3>
+                </div>
+                <button id="closePreview" class="close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <pre id="previewContent"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p id="loadingText">Analyzing structure...</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i data-lucide="check-circle" class="toast-icon"></i>
+        <span id="toastMessage">Copied to clipboard!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
