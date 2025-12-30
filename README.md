@@ -1,6 +1,4 @@
 
-## 📁 Folder2Context
-
 **Folder2Context** is a lightweight web-based utility that helps convert folder and file structures into **clean, readable context** for AI tools like ChatGPT, Claude, or any LLM.
 
 It is especially useful when working with **large codebases** where sharing full repositories is not practical, but understanding **project structure** is critical.
