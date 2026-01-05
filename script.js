@@ -30,8 +30,13 @@ const state = {
     projectName: '',
     folderHandle: null,
     currentStep: 1,
+
+    // ✅ NEW
+    detectedExtensions: new Set(),   // all extensions found in folder
+    enabledExtensions: new Set(),    // extensions currently included
     activeFilters: new Set()
 };
+
 
 const el = {
     backBtn: document.getElementById('backBtn'),
@@ -126,15 +131,32 @@ async function handleDirectoryOpen() {
 
         showLoading('Scanning file system...');
         state.files = [];
+        state.detectedExtensions.clear();
+state.enabledExtensions.clear();
+state.activeFilters.clear();
+
         await scanRecursive(handle, '');
+// ✅ enable only TEXT_EXTENSIONS by default
+state.enabledExtensions = new Set(
+    [...state.detectedExtensions].filter(ext =>
+        CONFIG.TEXT_EXTENSIONS.includes(ext)
+    )
+);
 
-        state.files = state.files.filter(f => {
-            const ext = '.' + f.name.split('.').pop().toLowerCase();
-            return CONFIG.TEXT_EXTENSIONS.includes(ext) && f.size <= CONFIG.MAX_FILE_SIZE;
-        });
+// ✅ select only files whose extension is enabled
+state.selectedPaths.clear();
+state.files.forEach(f => {
+    if (
+        state.enabledExtensions.has(f.extension) &&
+        f.size <= CONFIG.MAX_FILE_SIZE
+    ) {
+        state.selectedPaths.add(f.path);
+    }
+});
 
-        state.selectedPaths = new Set(state.files.map(f => f.path));
-        state.activeFilters = new Set([...new Set(state.files.map(f => f.extension))]);
+// keep filters in sync
+state.activeFilters = new Set(state.enabledExtensions);
+
 
         hideLoading();
         prepareSelectionView();
@@ -152,13 +174,17 @@ async function scanRecursive(handle, parentPath) {
 
         if (entry.kind === 'file') {
             const file = await entry.getFile();
-            state.files.push({
-                name: entry.name,
-                path: path,
-                size: file.size,
-                handle: entry,
-                extension: '.' + entry.name.split('.').pop().toLowerCase()
-            });
+            const extension = '.' + entry.name.split('.').pop().toLowerCase();
+state.detectedExtensions.add(extension);
+
+state.files.push({
+    name: entry.name,
+    path: path,
+    size: file.size,
+    handle: entry,
+    extension
+});
+
         } else {
             await scanRecursive(entry, path);
         }
@@ -190,18 +216,31 @@ function renderFilters() {
         btn.className = `filter-pill ${state.activeFilters.has(ext) ? 'active' : ''}`;
         btn.textContent = ext;
         btn.onclick = () => {
-            if (state.activeFilters.has(ext)) {
-                state.activeFilters.delete(ext);
-                state.files.forEach(f => { if (f.extension === ext) state.selectedPaths.delete(f.path); });
-            } else {
-                state.activeFilters.add(ext);
-                state.files.forEach(f => { if (f.extension === ext) state.selectedPaths.add(f.path); });
+    showLoading('Updating selection...');
+
+    if (state.enabledExtensions.has(ext)) {
+        state.enabledExtensions.delete(ext);
+        state.files.forEach(f => {
+            if (f.extension === ext) state.selectedPaths.delete(f.path);
+        });
+    } else {
+        state.enabledExtensions.add(ext);
+        state.files.forEach(f => {
+            if (f.extension === ext && f.size <= CONFIG.MAX_FILE_SIZE) {
+                state.selectedPaths.add(f.path);
             }
-            renderFilters();
-            handleSearch();
-            renderFileTree();
-            updateStats();
-        };
+        });
+    }
+
+    state.activeFilters = new Set(state.enabledExtensions);
+
+    renderFilters();
+    handleSearch();
+    renderFileTree();
+    updateStats();
+    hideLoading();
+};
+
         el.filterContainer.appendChild(btn);
     });
 }
@@ -345,12 +384,25 @@ function handleSearch() {
 }
 
 function toggleAll(check) {
-    state.selectedPaths = check ? new Set(state.files.map(f => f.path)) : new Set();
-    state.activeFilters = check ? new Set([...new Set(state.files.map(f => f.extension))]) : new Set();
+    state.selectedPaths.clear();
+
+    if (check) {
+        state.files.forEach(f => {
+            if (f.size <= CONFIG.MAX_FILE_SIZE) {
+                state.selectedPaths.add(f.path);
+            }
+        });
+        state.enabledExtensions = new Set(state.detectedExtensions);
+    } else {
+        state.enabledExtensions.clear();
+    }
+
+    state.activeFilters = new Set(state.enabledExtensions);
     renderFilters();
     renderFileTree();
     updateStats();
 }
+
 
 async function generateContext() {
     const selected = state.files.filter(f => state.selectedPaths.has(f.path));
